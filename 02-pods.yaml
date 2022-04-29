@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: 01-access-pod
+spec:
+  containers:
+  - name: access
+    image: uchimata/k8sdemo-access
+    command: ["sleep"]
+    args: ["infinity"]
+  dnsPolicy: Default
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: 02-redis-pod
+spec:
+  containers:
+  - name: redis
+    image: uchimata/k8sdemo-redis
+    imagePullPolicy: Always
+    env:
+    - name: IMAGE_SOURCE
+      value: "https://testuser:testpassword@local-registry:443/redis"
+  dnsPolicy: Default
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: 03-registry
+spec:
+  containers:
+  - name: registry
+    image: uchimata/k8sdemo-registry
+    imagePullPolicy: Always
+    env:
+    - name: REGISTRY_HTTP_ADDR
+      value: "0.0.0.0:443"
+    - name: REGISTRY_HTTP_TLS_CERTIFICATE
+      value: "/certs/k8sdemo-registry.crt"
+    - name: REGISTRY_HTTP_TLS_KEY
+      value: "/certs/k8sdemo-registry.key"
+    - name: REGISTRY_AUTH
+      value: "htpasswd"
+    - name: REGISTRY_AUTH_HTPASSWD_REALM
+      value: "Registry Realm"
+    - name: REGISTRY_AUTH_HTPASSWD_PATH
+      value: "/certs/htpasswd"
+  dnsPolicy: Default
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: 04-bastion
+spec:
+  containers:
+  - name: access
+    image: uchimata/k8sdemo-bastion
+    imagePullPolicy: Always
+  dnsPolicy: Default
+  serviceAccountName: pod-start-sa
+  automountServiceAccountToken: true
